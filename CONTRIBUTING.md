@@ -2,13 +2,13 @@
 
 # Contributing to vsphere-guest-run
 
-The vsphere-guest-run project team welcomes contributions from the community. If you wish to contribute code and you have not
+The **vsphere-guest-run** project team welcomes contributions from the community. If you wish to contribute code and you have not
 signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any
 questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
 
 ## Community
 
-## Getting Started
+Visit [#vcd channel on slack](https://vmwarecode.slack.com).
 
 ## Contribution Flow
 
@@ -81,3 +81,5 @@ and commits.
 When opening a new issue, try to roughly follow the commit message format conventions above.
 
 ## Repository Structure
+
+The Python module is located in the root directory of this repository.

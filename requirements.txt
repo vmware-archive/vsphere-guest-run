@@ -1,0 +1,2 @@
+click >= 6.7
+pyvmomi >= 6.5.0.2017.5.post1
