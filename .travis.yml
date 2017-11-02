@@ -1,0 +1,20 @@
+sudo: required
+
+services:
+  - docker
+
+python:
+  - '3.6'
+
+env:
+  matrix:
+  - TOX_ENV=flake8
+
+install:
+  - pip install --user . --upgrade --pre --no-cache
+  - pip install --user tox
+
+script:
+  - tox -e $TOX_ENV
+  - pip list --format=columns | grep vsphere-guest-run
+  - python -c 'import pkg_resources; print(pkg_resources.require("vsphere-guest-run")[0].version)'

@@ -12,6 +12,7 @@ import uuid
 
 RM_CMD = '/usr/bin/rm'
 
+
 class VSphere(object):
 
     def __init__(self, host, user, password, verify=True, port=443):
@@ -71,9 +72,15 @@ class VSphere(object):
                 if processes[0].exitCode is not None:
                     result = [processes[0].exitCode]
                     if get_output:
-                        r = self.download_file_from_guest(vm, user, password, stdout_file)
+                        r = self.download_file_from_guest(vm,
+                                                          user,
+                                                          password,
+                                                          stdout_file)
                         result.append(r)
-                        r = self.download_file_from_guest(vm, user, password, stderr_file)
+                        r = self.download_file_from_guest(vm,
+                                                          user,
+                                                          password,
+                                                          stderr_file)
                         result.append(r)
                         try:
                             ps = vim.vm.guest.ProcessManager.ProgramSpec(

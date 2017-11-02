@@ -23,37 +23,32 @@ def abort_if_false(ctx, param, value):
               is_flag=True,
               default=False,
               help='Enable debug')
-@click.option('-h',
-              '--vc-host',
-              metavar='<vc-host>',
-              required=True,
-              envvar='VGR_VC_HOST',
-              help='vCenter host')
 @click.option('-u',
-              '--vc-user',
+              '--url',
+              metavar='<user:pass@host>',
               required=True,
-              metavar='<vc-user>',
-              envvar='VGR_VC_USER',
-              help='vCenter user')
-@click.option('-p',
-              '--vc-password',
-              required=True,
-              prompt=False,
-              metavar='<password>',
-              confirmation_prompt=False,
-              envvar='VGR_VC_PASSWORD',
-              hide_input=True,
-              help='vCenter Password')
+              envvar='VGR_URL',
+              help='ESXi or vCenter URL')
 @click.option('-s/-i',
               '--verify-ssl-certs/--no-verify-ssl-certs',
               required=False,
               default=True,
               help='Verify SSL certificates')
-def vgr(ctx, debug, vc_host, vc_user, vc_password, verify_ssl_certs):
+def vgr(ctx, debug, url, verify_ssl_certs):
     """vSphere Guest Run"""
     if ctx.invoked_subcommand is None:
         click.secho(ctx.get_help())
         return
+    tokens = url.split(':')
+    vc_user = tokens[0]
+    tokens = tokens[1].split('@')
+    vc_host = tokens[-1]
+    vc_password = ''
+    for token in tokens[:-1]:
+        if len(vc_password) > 0:
+            vc_password += '@'
+        vc_password += token
+
     vs = VSphere(vc_host,
                  vc_user,
                  vc_password)
@@ -61,6 +56,7 @@ def vgr(ctx, debug, vc_host, vc_user, vc_password, verify_ssl_certs):
     vs.connect()
     ctx.obj = {}
     ctx.obj['vs'] = vs
+
 
 @vgr.command(short_help='show info')
 @click.pass_context
@@ -139,11 +135,13 @@ def run(ctx, vm_name,
         traceback.print_exc()
         click.secho(str(e))
 
+
 @vgr.command('list', short_help='list VMs')
 @click.pass_context
 def list_cmd(ctx, tree):
     """List VMs"""
     click.secho('not implemented')
+
 
 if __name__ == '__main__':
     vgr()
