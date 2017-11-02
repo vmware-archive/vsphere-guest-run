@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 import click
+import json
 import pkg_resources
+from pygments import formatters
+from pygments import highlight
+from pygments import lexers
 from vsphere_guest_run.vsphere import VSphere
 
 
@@ -69,10 +73,11 @@ def info(ctx, vm_moid):
         click.secho('%s' % vs.service_instance.content.about)
     else:
         vm = vs.get_vm_by_moid(vm_moid)
-        import json
-        click.secho('%s' % json.dumps(vs.vm_to_dict(vm),
-                                      indent=4,
-                                      sort_keys=True))
+        click.echo(highlight(json.dumps(vs.vm_to_dict(vm),
+                                        indent=4,
+                                        sort_keys=True),
+                             lexers.JsonLexer(),
+                             formatters.TerminalFormatter()))
 
 
 @vgr.command(short_help='show version')

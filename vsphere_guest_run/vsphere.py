@@ -44,6 +44,9 @@ class VSphere(object):
         result['config.hardware.numCPU'] = vm.config.hardware.numCPU
         result['config.hardware.memoryMB'] = vm.config.hardware.memoryMB
         result['config.guestFullName'] = vm.config.guestFullName
+        result['config.version'] = vm.config.version
+        result['config.uuid'] = vm.config.uuid
+        result['config.guestId'] = vm.config.guestId
         result['guest.guestState'] = vm.guest.guestState
         return result
 
