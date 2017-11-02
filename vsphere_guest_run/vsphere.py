@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 from pyVim import connect
+import pyVmomi
 from pyVmomi import vim
 import requests
 import ssl
@@ -35,6 +36,16 @@ class VSphere(object):
         vm = vim.VirtualMachine(moid)
         vm._stub = self.service_instance._stub
         return vm
+
+    def vm_to_dict(self, vm):
+        result = {}
+        result['name'] = vm.name
+        result['moid'] = vm._moId
+        result['config.hardware.numCPU'] = vm.config.hardware.numCPU
+        result['config.hardware.memoryMB'] = vm.config.hardware.memoryMB
+        result['config.guestFullName'] = vm.config.guestFullName
+        result['guest.guestState'] = vm.guest.guestState
+        return result
 
     def execute_program_in_guest(self,
                                  vm,
@@ -138,3 +149,67 @@ class VSphere(object):
 
     def execute_script_in_guest(self):
         pass
+
+    def list_vms(self):
+        vm_properties = ["name", "config.uuid", "config",
+                         "config.hardware.numCPU",
+                         "config.hardware.memoryMB", "guest.guestState",
+                         "config.guestFullName", "config.guestId",
+                         "config.version"]
+        content = self.service_instance.RetrieveContent()
+        view = content.viewManager.CreateContainerView(content.rootFolder,
+                                                       [vim.VirtualMachine],
+                                                       True)
+        vm_data = self.collect_properties(view_ref=view,
+                                          obj_type=vim.VirtualMachine,
+                                          path_set=vm_properties,
+                                          include_mors=True)
+        return vm_data
+
+    def collect_properties(self, view_ref, obj_type, path_set=None,
+                           include_mors=False):
+        collector = self.service_instance.content.propertyCollector
+
+        # Create object specification to define the starting point of
+        # inventory navigation
+        obj_spec = pyVmomi.vmodl.query.PropertyCollector.ObjectSpec()
+        obj_spec.obj = view_ref
+        obj_spec.skip = True
+
+        # Create a traversal specification to identify the path for collection
+        traversal_spec = pyVmomi.vmodl.query.PropertyCollector.TraversalSpec()
+        traversal_spec.name = 'traverseEntities'
+        traversal_spec.path = 'view'
+        traversal_spec.skip = False
+        traversal_spec.type = view_ref.__class__
+        obj_spec.selectSet = [traversal_spec]
+
+        # Identify the properties to the retrieved
+        property_spec = pyVmomi.vmodl.query.PropertyCollector.PropertySpec()
+        property_spec.type = obj_type
+
+        if not path_set:
+            property_spec.all = True
+
+        property_spec.pathSet = path_set
+
+        # Add the object and property specification to the
+        # property filter specification
+        filter_spec = pyVmomi.vmodl.query.PropertyCollector.FilterSpec()
+        filter_spec.objectSet = [obj_spec]
+        filter_spec.propSet = [property_spec]
+
+        # Retrieve properties
+        props = collector.RetrieveContents([filter_spec])
+
+        data = []
+        for obj in props:
+            properties = {}
+            for prop in obj.propSet:
+                properties[prop.name] = prop.val
+
+            if include_mors:
+                properties['obj'] = obj.obj
+
+            data.append(properties)
+        return data

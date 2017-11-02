@@ -48,22 +48,31 @@ def vgr(ctx, debug, url, verify_ssl_certs):
         if len(vc_password) > 0:
             vc_password += '@'
         vc_password += token
-
     vs = VSphere(vc_host,
                  vc_user,
-                 vc_password)
-    # moid = va.get_vm_moid(vm_name)
-    vs.connect()
+                 vc_password,
+                 verify=verify_ssl_certs)
     ctx.obj = {}
     ctx.obj['vs'] = vs
 
 
 @vgr.command(short_help='show info')
 @click.pass_context
-def info(ctx):
+@click.argument('vm-moid',
+                required=False)
+def info(ctx, vm_moid):
     """Show info"""
     vs = ctx.obj['vs']
-    print(vs.service_instance.content.about)
+    vs.connect()
+    if vm_moid is None:
+        click.secho('URL: %s:*******@%s' % (vs.user, vs.host))
+        click.secho('%s' % vs.service_instance.content.about)
+    else:
+        vm = vs.get_vm_by_moid(vm_moid)
+        import json
+        click.secho('%s' % json.dumps(vs.vm_to_dict(vm),
+                                      indent=4,
+                                      sort_keys=True))
 
 
 @vgr.command(short_help='show version')
@@ -105,15 +114,17 @@ def help(ctx, tree):
               metavar='<vm-name>',
               envvar='VGR_VM',
               help='VM name')
-@click.argument('guest-user')
+@click.option('guest_user',
+              '-g',
+              '--guest-user',
+              metavar='<guest-user>',
+              envvar='VGR_GUEST_USER',
+              help='Guest OS user name')
 @click.argument('guest-password')
 @click.argument('command')
 def run(ctx, vm_name,
         guest_user, guest_password, command):
     try:
-        # vs = VSphere(vc_host,
-        #              vc_user,
-        #              vc_password)
         # moid = va.get_vm_moid(vm_name)
         vs = ctx.obj['vs']
         moid = vm_name
@@ -138,9 +149,17 @@ def run(ctx, vm_name,
 
 @vgr.command('list', short_help='list VMs')
 @click.pass_context
-def list_cmd(ctx, tree):
+def list_cmd(ctx):
     """List VMs"""
-    click.secho('not implemented')
+    vs = ctx.obj['vs']
+    vs.connect()
+    vm_data = vs.list_vms()
+    headers = ['name', 'moid', 'state']
+    table = []
+    for vm in vm_data:
+        table.append([vm['name'], vm['obj']._moId, vm['guest.guestState']])
+    from tabulate import tabulate
+    click.secho(tabulate(table, headers=headers))
 
 
 if __name__ == '__main__':
