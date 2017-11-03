@@ -68,6 +68,8 @@ notification when you git push.
 
 ### Code Style
 
+Contributions should follow [PEP 8 -- Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/).
+
 ### Formatting Commit Messages
 
 We follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/).
