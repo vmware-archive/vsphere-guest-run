@@ -8,6 +8,7 @@ import pkg_resources
 from pygments import formatters
 from pygments import highlight
 from pygments import lexers
+import requests
 from vsphere_guest_run.vsphere import VSphere
 
 
@@ -38,11 +39,56 @@ def abort_if_false(ctx, param, value):
               required=False,
               default=True,
               help='Verify SSL certificates')
-def vgr(ctx, debug, url, verify_ssl_certs):
-    """vSphere Guest Run"""
+@click.option('-w',
+              '--disable-warnings',
+              is_flag=True,
+              required=False,
+              default=False,
+              help='Do not display warnings when not verifying SSL ' +
+                   'certificates')
+def vgr(ctx, debug, url, verify_ssl_certs, disable_warnings):
+    """vSphere Guest Run
+
+\b
+    Run commands on VM guest OS.
+\b
+    Examples
+        vgr list
+            list of VMs.
+\b
+        vgr run vm-111 /bin/date
+            run command on a VM guest OS.
+\b
+        vgr -i -w run vm-111 '/bin/uname -a'
+            run command on a VM guest OS.
+\b
+    Environment Variables
+        VGR_URL
+            If this environment variable is set, the command will use its value
+            as the URL to login on the vCenter or ESXi. The --url
+            option has precedence over the environment variable. The format for
+            the URL is: 'user:pass@host'
+        VGR_GUEST_USER
+            If this environment variable is set, the command will use its value
+            as the user to login on the guest. The --guest-user
+            option has precedence over the environment variable.
+        VGR_GUEST_PASSWORD
+            If this environment variable is set, the command will use its value
+            as the password to login on the guest. The --guest-password
+            option has precedence over the environment variable.
+    """  # NOQA
     if ctx.invoked_subcommand is None:
         click.secho(ctx.get_help())
         return
+    if not verify_ssl_certs:
+        if disable_warnings:
+            pass
+        else:
+            click.secho('InsecureRequestWarning: '
+                        'Unverified HTTPS request is being made. '
+                        'Adding certificate verification is strongly '
+                        'advised.', fg='yellow', err=True)
+        requests.packages.urllib3.disable_warnings()
     tokens = url.split(':')
     vc_user = tokens[0]
     tokens = tokens[1].split('@')
@@ -113,39 +159,53 @@ def help(ctx, tree):
 
 @vgr.command(short_help='run command in guest')
 @click.pass_context
-@click.option('vm_name',
-              '-v',
-              '--vm',
-              metavar='<vm-name>',
-              envvar='VGR_VM',
-              help='VM name')
+@click.argument('vm_moid',
+                metavar='<vm-moid>',
+                envvar='VGR_VM_MOID')
 @click.option('guest_user',
               '-g',
               '--guest-user',
               metavar='<guest-user>',
               envvar='VGR_GUEST_USER',
               help='Guest OS user name')
-@click.argument('guest-password')
+@click.option('guest_password',
+              '-p',
+              '--guest-password',
+              metavar='<guest-password>',
+              envvar='VGR_GUEST_PASSWORD',
+              help='Guest OS password')
+@click.option('rm_cmd',
+              '-r',
+              '--rm',
+              default='/bin/rm',
+              metavar='<rm-cmd>',
+              envvar='VGR_RM_CMD',
+              help='rm cmd')
 @click.argument('command')
-def run(ctx, vm_name,
-        guest_user, guest_password, command):
+def run(ctx, vm_moid, guest_user, guest_password, command, rm_cmd):
     try:
-        # moid = va.get_vm_moid(vm_name)
         vs = ctx.obj['vs']
-        moid = vm_name
         vs.connect()
-        vm = vs.get_vm_by_moid(moid)
+        if vm_moid is None:
+            pass
+        vm = vs.get_vm_by_moid(vm_moid)
         result = vs.execute_program_in_guest(
                     vm,
                     guest_user,
                     guest_password,
                     command,
-                    True,
-                    1
-                    )
-        click.secho('exit_code: %s\n' % result[0])
-        click.secho('stdout: \n%s\n' % result[1].content.decode())
-        click.secho('stderr: \n%s\n' % result[2].content.decode())
+                    wait_for_completion=True,
+                    wait_time=1,
+                    get_output=True,
+                    rm_cmd=rm_cmd)
+        stdout = result[1].content.decode()
+        stderr = result[2].content.decode()
+        if len(stderr) > 0:
+            click.secho(stderr, err=True)
+        if len(stdout) > 0:
+            click.secho(stdout, err=False)
+        ctx.exit(result[0])
+
     except Exception as e:
         import traceback
         traceback.print_exc()

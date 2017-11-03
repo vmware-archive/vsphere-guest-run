@@ -11,7 +11,7 @@ import time
 import uuid
 
 
-RM_CMD = '/usr/bin/rm'
+RM_CMD = '/bin/rm'
 
 
 class VSphere(object):
@@ -57,7 +57,8 @@ class VSphere(object):
                                  command,
                                  wait_for_completion=False,
                                  wait_time=1,
-                                 get_output=True):
+                                 get_output=True,
+                                 rm_cmd=RM_CMD):
         tokens = command.split()
         program_path = tokens.pop(0)
         arguments = ''
@@ -98,7 +99,7 @@ class VSphere(object):
                         result.append(r)
                         try:
                             ps = vim.vm.guest.ProcessManager.ProgramSpec(
-                                programPath=RM_CMD,
+                                programPath=rm_cmd,
                                 arguments='-rf /tmp/%s.*' % file_uuid
                             )
                             r = pm.StartProgramInGuest(vm, creds, ps)
