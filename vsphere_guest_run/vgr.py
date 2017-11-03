@@ -9,6 +9,7 @@ from pygments import formatters
 from pygments import highlight
 from pygments import lexers
 import requests
+from tabulate import tabulate
 from vsphere_guest_run.vsphere import VSphere
 
 
@@ -223,7 +224,6 @@ def list_cmd(ctx):
     table = []
     for vm in vm_data:
         table.append([vm['name'], vm['obj']._moId, vm['guest.guestState']])
-    from tabulate import tabulate
     click.secho(tabulate(table, headers=headers))
 
 
