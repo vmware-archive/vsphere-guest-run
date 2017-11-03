@@ -55,8 +55,8 @@ $ export VGR_GUEST_USER=root
 $ export VGR_GUEST_PASSWORD='pA!9#6$f'
 
 $ vgr list
-name                                              moid    state
-------------------------------------------------  ------  ----------
+name                                            moid    state
+----------------------------------------------  ------  ----------
 disk1 (91b3a2e2-fd02-412b-9914-9974d60b2351)    vm-363  notRunning
 ubu1 (6f31ed4b-5b64-41c7-bbaa-3a64e695f425)     vm-361  notRunning
 csetmpu (deb8dd18-e7d6-45f2-94d6-84b71f1197d0)  vm-348  running
