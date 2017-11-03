@@ -50,10 +50,6 @@ Commands:
 
 $ export VGR_URL='administrator@vsphere.local:Welcome@123@vcenter.eng.vmware.com'
 
-$ export VGR_GUEST_USER=root
-
-$ export VGR_GUEST_PASSWORD='pA!9#6$f'
-
 $ vgr list
 name                                            moid    state
 ----------------------------------------------  ------  ----------
@@ -68,6 +64,10 @@ ubu1 (632063e8-f375-498a-acf0-385ee3318602)     vm-357  notRunning
 csetmpu (ee9197cf-f4e2-48d5-aaab-cc41b823d277)  vm-315  notRunning
 ph1 (795d6e82-eb14-41cb-ae2a-ff390b4f174d)      vm-232  running
 Photon (e851fe44-2cee-4d57-8a2d-4fc272f14828)   vm-33   notRunning
+
+$ export VGR_GUEST_USER=root
+
+$ export VGR_GUEST_PASSWORD='pA!9#6$f'
 
 $ vgr info vm-346
 {
