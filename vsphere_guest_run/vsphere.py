@@ -170,6 +170,8 @@ class VSphere(object):
                                           include_mors=True)
         return vm_data
 
+    # Shamelessly borrowed from:
+    # https://github.com/dnaeon/py-vconnector/blob/master/src/vconnector/core.py
     def collect_properties(self, view_ref, obj_type, path_set=None,
                            include_mors=False):
         collector = self.service_instance.content.propertyCollector
