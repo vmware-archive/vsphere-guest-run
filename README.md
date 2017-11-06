@@ -2,6 +2,9 @@
 # vsphere-guest-run
 
 [![Latest Version](https://img.shields.io/pypi/v/vsphere-guest-run.svg)](https://pypi.python.org/pypi/vsphere-guest-run)
+[![Stable Version](https://img.shields.io/pypi/v/vsphere-guest-run.svg)](https://pypi.python.org/pypi/vsphere-guest-run)
+[![Build Status](https://img.shields.io/travis/vmware/vsphere-guest-run.svg?style=flat)](https://travis-ci.org/vmware/vsphere-guest-run)
+
 
 ## Overview
 
