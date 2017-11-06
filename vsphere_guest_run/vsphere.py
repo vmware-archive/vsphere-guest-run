@@ -80,7 +80,7 @@ class VSphere(object):
         )
         result = pm.StartProgramInGuest(vm, creds, ps)
         if not wait_for_completion:
-            return result
+            return [result]
         while True:
             try:
                 processes = pm.ListProcessesInGuest(vm, creds, [result])
