@@ -3,3 +3,5 @@ flake8
 hacking
 nose
 nose-testconfig
+yapf
+
