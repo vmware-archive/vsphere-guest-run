@@ -48,13 +48,16 @@ def vgr(ctx, debug, url, verify_ssl_certs, disable_warnings):
     """vSphere Guest Run
 
 \b
-    Run commands on VM guest OS.
+    Run commands and work with files on VM guest OS.
 \b
     Examples
         vgr list
             list of VMs.
 \b
         vgr run vm-111 /bin/date
+            run command on a VM guest OS.
+\b
+        vgr -i -w run vm-111 '/bin/which uname'
             run command on a VM guest OS.
 \b
         vgr -i -w run vm-111 '/bin/uname -a'
@@ -199,7 +202,6 @@ def run(ctx, vm_moid, guest_user, guest_password, command, rm_cmd):
         if len(stdout) > 0:
             click.secho(stdout, err=False)
         ctx.exit(result[0])
-
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -218,6 +220,68 @@ def list_cmd(ctx):
     for vm in vm_data:
         table.append([vm['name'], vm['obj']._moId, vm['guest.guestState']])
     click.secho(tabulate(table, headers=headers))
+
+
+@vgr.command('run-script', short_help='run script in guest')
+@click.pass_context
+@click.argument('vm_moid', metavar='<vm-moid>', envvar='VGR_VM_MOID')
+@click.argument(
+    'script-file',
+    type=click.Path(exists=True),
+    metavar='<script-file>',
+    required=True)
+@click.option(
+    'guest_user',
+    '-g',
+    '--guest-user',
+    metavar='<guest-user>',
+    envvar='VGR_GUEST_USER',
+    help='Guest OS user name')
+@click.option(
+    'guest_password',
+    '-p',
+    '--guest-password',
+    metavar='<guest-password>',
+    envvar='VGR_GUEST_PASSWORD',
+    help='Guest OS password')
+@click.option(
+    'rm_cmd',
+    '-r',
+    '--rm',
+    default='/bin/rm',
+    metavar='<rm-cmd>',
+    envvar='VGR_RM_CMD',
+    help='rm cmd')
+def run_script(ctx, vm_moid, script_file, guest_user, guest_password, rm_cmd):
+    try:
+        vs = ctx.obj['vs']
+        vs.connect()
+        if vm_moid is None:
+            pass
+        vm = vs.get_vm_by_moid(vm_moid)
+        with open(script_file, 'r') as f:
+            content = f.read()
+        result = vs.execute_script_in_guest(
+            vm,
+            guest_user,
+            guest_password,
+            content,
+            target_file=None,
+            wait_for_completion=True,
+            wait_time=1,
+            get_output=True,
+            rm_cmd=rm_cmd)
+        stdout = result[1].content.decode()
+        stderr = result[2].content.decode()
+        if len(stderr) > 0:
+            click.secho(stderr, err=True)
+        if len(stdout) > 0:
+            click.secho(stdout, err=False)
+        ctx.exit(result[0])
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        click.secho(str(e))
 
 
 if __name__ == '__main__':

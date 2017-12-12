@@ -162,8 +162,35 @@ class VSphere(object):
         content.guestOperationsManager.fileManager. \
             DeleteFileInGuest(vm, creds, file_path)
 
-    def execute_script_in_guest(self):
-        pass
+    def execute_script_in_guest(self,
+                                vm,
+                                user,
+                                password,
+                                content,
+                                target_file=None,
+                                wait_for_completion=False,
+                                wait_time=1,
+                                get_output=True,
+                                delete_script=True,
+                                rm_cmd=RM_CMD):
+        target = target_file
+        if target is None:
+            target = '/tmp/%s.sh' % uuid.uuid1()
+        self.upload_file_to_guest(vm, user, password, content, target)
+        cmd = '/bin/chmod u+rx %s' % target
+        self.execute_program_in_guest(
+            vm, user, password, cmd, wait_for_completion=True)
+        result = self.execute_program_in_guest(
+            vm,
+            user,
+            password,
+            target,
+            wait_for_completion=wait_for_completion,
+            wait_time=wait_time,
+            get_output=get_output)
+        if wait_for_completion and delete_script:
+            self.delete_file_in_guest(vm, user, password, target)
+        return result
 
     def list_vms(self):
         vm_properties = [
