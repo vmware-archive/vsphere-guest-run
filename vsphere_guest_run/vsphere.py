@@ -58,7 +58,8 @@ class VSphere(object):
                                  wait_for_completion=False,
                                  wait_time=1,
                                  get_output=True,
-                                 rm_cmd=RM_CMD):
+                                 rm_cmd=RM_CMD,
+                                 callback=None):
         tokens = command.split()
         program_path = tokens.pop(0)
         arguments = ''
@@ -79,6 +80,7 @@ class VSphere(object):
         result = pm.StartProgramInGuest(vm, creds, ps)
         if not wait_for_completion:
             return [result]
+        n = 0
         while True:
             try:
                 processes = pm.ListProcessesInGuest(vm, creds, [result])
@@ -97,14 +99,26 @@ class VSphere(object):
                                 arguments='-rf /tmp/%s.*' % file_uuid)
                             r = pm.StartProgramInGuest(vm, creds, ps)
                         except Exception as e:
-                            print(e)
+                            if callback is not None:
+                                callback('exception', e)
+                            else:
+                                print(str(e))
+                    if callback is not None:
+                        callback('process %s finished, exit code: %s' %
+                                 (result, processes[0].exitCode))
                     return result
                 else:
+                    if callback is not None:
+                        n += 1
+                        callback('waiting for process %s to finish (%s)' %
+                                 (result, n))
                     time.sleep(wait_time)
-            except Exception:
-                import traceback
-                print(traceback.format_exc())
-                print('will retry again in a few seconds')
+            except Exception as e:
+                if callback is not None:
+                    callback('exception, will retry in a few seconds', e)
+                else:
+                    print(str(e))
+                    print('will retry again in a few seconds')
                 time.sleep(wait_time * 3)
 
     def upload_file_to_guest(self, vm, user, password, data, target_file):
@@ -172,7 +186,8 @@ class VSphere(object):
                                 wait_time=1,
                                 get_output=True,
                                 delete_script=True,
-                                rm_cmd=RM_CMD):
+                                rm_cmd=RM_CMD,
+                                callback=None):
         target = target_file
         if target is None:
             target = '/tmp/%s.sh' % uuid.uuid1()
@@ -187,7 +202,9 @@ class VSphere(object):
             target,
             wait_for_completion=wait_for_completion,
             wait_time=wait_time,
-            get_output=get_output)
+            get_output=get_output,
+            rm_cmd=rm_cmd,
+            callback=callback)
         if wait_for_completion and delete_script:
             self.delete_file_in_guest(vm, user, password, target)
         return result
@@ -261,15 +278,14 @@ class VSphere(object):
             data.append(properties)
         return data
 
-    def get_tools_status(self):
-        pass
-
-    def wait_until_tools_ready(self, vm, timeout):
+    def wait_until_tools_ready(self, vm, sleep=5, callback=None):
         while True:
             try:
                 status = vm.guest.toolsRunningStatus
+                callback(status)
                 if 'guestToolsRunning' == status:
                     return
-                time.sleep(1)
-            except Exception:
-                time.sleep(1)
+                time.sleep(sleep)
+            except Exception as e:
+                callback('exception', exception=e)
+                time.sleep(sleep)
