@@ -135,7 +135,8 @@ class VSphere(object):
                                         False)
         resp = requests.put(url, data=data, verify=False)
         if not resp.status_code == 200:
-            raise Exception('Error while uploading file: %s' % resp.status_code)
+            raise Exception(
+                'Error while uploading file: %s' % resp.status_code)
         else:
             return True
 
