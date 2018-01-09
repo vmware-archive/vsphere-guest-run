@@ -283,10 +283,10 @@ class VSphere(object):
         while True:
             try:
                 status = vm.guest.toolsRunningStatus
-                callback(status)
+                callback('vm=%s, status=%s' % (vm, status))
                 if 'guestToolsRunning' == status:
                     return
                 time.sleep(sleep)
             except Exception as e:
-                callback('exception', exception=e)
+                callback('vm=%s, exception' % vm, exception=e)
                 time.sleep(sleep)
