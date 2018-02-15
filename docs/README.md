@@ -48,7 +48,7 @@ Commands:
   run      run command in guest
   version  show version
 
-$ export VGR_URL='administrator@vsphere.local:Welcome@123@vcenter.eng.vmware.com'
+$ export VGR_URL='administrator@vsphere.local:*********@vcenter.eng.vmware.com'
 
 $ vgr list
 name                                            moid    state
@@ -67,7 +67,7 @@ Photon (e851fe44-2cee-4d57-8a2d-4fc272f14828)   vm-33   notRunning
 
 $ export VGR_GUEST_USER=root
 
-$ export VGR_GUEST_PASSWORD='pA!9#6$f'
+$ export VGR_GUEST_PASSWORD='*********'
 
 $ vgr info vm-346
 {

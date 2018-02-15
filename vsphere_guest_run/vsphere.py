@@ -77,13 +77,15 @@ class VSphere(object):
         pm = content.guestOperationsManager.processManager
         ps = vim.vm.guest.ProcessManager.ProgramSpec(
             programPath=program_path, arguments=arguments)
-        result = pm.StartProgramInGuest(vm, creds, ps)
+        pid = pm.StartProgramInGuest(vm, creds, ps)
         if not wait_for_completion:
-            return [result]
+            return [pid]
         n = 0
         while True:
             try:
-                processes = pm.ListProcessesInGuest(vm, creds, [result])
+                processes = pm.ListProcessesInGuest(vm, creds, [pid])
+                if len(processes) == 0:
+                    raise Exception('process not found (pid=%s)' % pid)
                 if processes[0].exitCode is not None:
                     result = [processes[0].exitCode]
                     if get_output:
@@ -111,9 +113,11 @@ class VSphere(object):
                     if callback is not None:
                         n += 1
                         callback('waiting for process %s to finish (%s)' %
-                                 (result, n))
+                                 (pid, n))
                     time.sleep(wait_time)
             except Exception as e:
+                if str(e).startswith('process not found ('):
+                    raise e
                 if callback is not None:
                     callback('exception, will retry in a few seconds', e)
                 else:
