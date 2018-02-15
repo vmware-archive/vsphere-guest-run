@@ -1,6 +1,13 @@
 CHANGES
 =======
 
+0.0.5
+-----
+
+* changelog
+* Improved exception handling (#1)
+* Improved exception handling
+* Update README.md
 
 0.0.4
 -----

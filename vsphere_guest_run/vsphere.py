@@ -85,7 +85,8 @@ class VSphere(object):
             try:
                 processes = pm.ListProcessesInGuest(vm, creds, [pid])
                 if len(processes) == 0:
-                    raise Exception('process not found (pid=%s)' % pid)
+                    raise Exception('process not found (pid=%s) (vm=%s)' %
+                                    (pid, vm))
                 if processes[0].exitCode is not None:
                     result = [processes[0].exitCode]
                     if get_output:
@@ -106,20 +107,23 @@ class VSphere(object):
                             else:
                                 print(str(e))
                     if callback is not None:
-                        callback('process %s finished, exit code: %s' %
-                                 (result, processes[0].exitCode))
+                        callback(
+                            'process %s on vm %s finished, exit code: %s' %
+                            (result, vm, processes[0].exitCode))
                     return result
                 else:
                     if callback is not None:
                         n += 1
-                        callback('waiting for process %s to finish (%s)' %
-                                 (pid, n))
+                        callback(
+                            'waiting for process %s on vm %s to finish (%s)' %
+                            (pid, vm, n))
                     time.sleep(wait_time)
             except Exception as e:
                 if str(e).startswith('process not found ('):
                     raise e
                 if callback is not None:
-                    callback('exception, will retry in a few seconds', e)
+                    callback('exception, will retry in a few seconds, vm %s' %
+                             vm, e)
                 else:
                     print(str(e))
                     print('will retry again in a few seconds')
