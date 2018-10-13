@@ -22,7 +22,7 @@ class VSphere(object):
         self.port = port
 
     def connect(self):
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         if not self.verify:
             context.verify_mode = ssl.CERT_NONE
         self.service_instance = connect.SmartConnect(
